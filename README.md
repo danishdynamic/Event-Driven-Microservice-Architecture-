@@ -72,7 +72,7 @@ The system uses KRaft mode, which simplifies the architecture by removing the Zo
 
 📂 Project Structure
 
-```mermaid 
+``` Bash
 StreamStore/
 ├── .gitignore             # Prevents venv and cache uploads
 ├── Dockerfile             # Multi-service Python build recipe
