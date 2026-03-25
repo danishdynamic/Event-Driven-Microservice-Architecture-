@@ -1,0 +1,57 @@
+services:
+  kafka:
+    image: confluentinc/cp-kafka:7.8.3
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      # --- KRaft Node Configuration ---
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@localhost:9093'
+      CLUSTER_ID: '1L6g8nGhU-eABfL--X22wo'
+      
+      # --- Networking & Listeners Configuration ---
+      # 1. Map custom listener names to standard protocols
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT'
+      
+      # 2. Listen on 0.0.0.0 so the container accepts outside connections
+      KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093'
+      
+      # 3. Use localhost here so your Python script knows where to go
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://localhost:9092'
+      
+      # 4. Define which listener is for what role
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+
+      # --- Other Critical Settings ---
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_LOG_DIRS: '/var/lib/kafka/data'
+
+    volumes:
+      - kafka-kraft:/var/lib/kafka/data
+
+
+  order-producer:
+      build: .
+      container_name: order_producer
+      depends_on:
+        - kafka
+      command: python producer.py
+      environment:
+        KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+
+  order-tracker:
+    build: .
+    container_name: order_tracker
+    depends_on:
+      - kafka
+    command: python tracker.py
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+
+volumes:
+  kafka-kraft:
